@@ -4,105 +4,62 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>ASABA LIFE</title>
-
 <style>
 *{box-sizing:border-box}
 html,body{
-  margin:0;
-  width:100%;
-  height:100%;
-  overflow:hidden;
-  background:#87b9e8;
-  font-family:Arial,sans-serif;
-  touch-action:none;
+  margin:0;width:100%;height:100%;overflow:hidden;
+  background:#87b9e8;font-family:Arial,sans-serif;touch-action:none
 }
-#game{
-  position:relative;
-  width:100%;
-  height:100%;
-}
-canvas{
-  display:block;
-  width:100%;
-  height:100%;
-}
+#game{position:relative;width:100%;height:100%}
+canvas{display:block;width:100%;height:100%}
+
 #hud{
-  position:absolute;
-  top:12px;
-  left:12px;
-  z-index:10;
-  background:#111c;
-  color:white;
-  padding:10px 14px;
-  border-radius:12px;
-  font-weight:bold;
+ position:absolute;top:12px;left:12px;z-index:10;
+ background:#111c;color:white;padding:10px 14px;
+ border-radius:12px;font-weight:bold
 }
 #money{color:#65ff78}
 
+#location{
+ position:absolute;top:12px;right:12px;z-index:10;
+ background:#111c;color:white;padding:8px 11px;
+ border-radius:10px;font-size:12px
+}
+
 #joystick{
-  position:absolute;
-  left:22px;
-  bottom:25px;
-  width:125px;
-  height:125px;
-  border-radius:50%;
-  background:#ffffff25;
-  border:2px solid #ffffff55;
-  z-index:20;
+ position:absolute;left:22px;bottom:25px;
+ width:125px;height:125px;border-radius:50%;
+ background:#ffffff25;border:2px solid #ffffff55;z-index:20
 }
 #stick{
-  position:absolute;
-  left:37px;
-  top:37px;
-  width:50px;
-  height:50px;
-  border-radius:50%;
-  background:#ffffffaa;
+ position:absolute;left:37px;top:37px;
+ width:50px;height:50px;border-radius:50%;
+ background:#ffffffaa
 }
-
 #action{
-  position:absolute;
-  right:25px;
-  bottom:35px;
-  width:75px;
-  height:75px;
-  border-radius:50%;
-  border:2px solid white;
-  background:#111c;
-  color:white;
-  font-weight:bold;
-  z-index:20;
-}
-
-#tip{
-  position:absolute;
-  top:12px;
-  right:12px;
-  color:white;
-  background:#111c;
-  padding:8px 10px;
-  border-radius:10px;
-  font-size:12px;
+ position:absolute;right:25px;bottom:35px;
+ width:75px;height:75px;border-radius:50%;
+ border:2px solid white;background:#111c;color:white;
+ font-weight:bold;z-index:20
 }
 </style>
 </head>
 
 <body>
-
 <div id="game">
 
-  <div id="hud">
-    🇳🇬 ASABA LIFE<br>
-    💰 ₦<span id="money">5000</span>
-  </div>
+<div id="hud">
+🇳🇬 ASABA LIFE<br>
+💰 ₦<span id="money">5000</span>
+</div>
 
-  <div id="tip">Explore Asaba</div>
+<div id="location">ASABA CITY</div>
 
-  <div id="joystick">
-    <div id="stick"></div>
-  </div>
+<div id="joystick">
+<div id="stick"></div>
+</div>
 
-  <button id="action">ACTION</button>
+<button id="action">ACTION</button>
 
 </div>
 
@@ -111,275 +68,434 @@ canvas{
 import * as THREE from
 "https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js";
 
-const scene = new THREE.Scene();
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87b9e8);
+scene.fog=new THREE.Fog(0x87b9e8,80,260);
 
-scene.background = new THREE.Color(0x87b9e8);
-
-const camera = new THREE.PerspectiveCamera(
-  60,
-  innerWidth / innerHeight,
-  0.1,
-  1000
+const camera=new THREE.PerspectiveCamera(
+60,innerWidth/innerHeight,.1,500
 );
 
 camera.position.set(0,8,12);
 
-const renderer = new THREE.WebGLRenderer({
-  antialias:true
+const renderer=new THREE.WebGLRenderer({
+antialias:true
 });
 
 renderer.setSize(innerWidth,innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));
 document.getElementById("game").prepend(renderer.domElement);
 
 /* LIGHT */
 
-const sun = new THREE.DirectionalLight(0xffffff,2);
-sun.position.set(10,20,10);
+const sun=new THREE.DirectionalLight(0xffffff,2);
+sun.position.set(40,80,30);
 scene.add(sun);
 
-scene.add(new THREE.AmbientLight(0xffffff,0.6));
+scene.add(new THREE.HemisphereLight(
+0x9fd8ff,
+0x557744,
+1.2
+));
 
 /* GROUND */
 
-const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(300,300),
-  new THREE.MeshStandardMaterial({
-    color:0x69a957
-  })
+const ground=new THREE.Mesh(
+new THREE.PlaneGeometry(300,300),
+new THREE.MeshStandardMaterial({color:0x69a957})
 );
 
-ground.rotation.x = -Math.PI/2;
+ground.rotation.x=-Math.PI/2;
 scene.add(ground);
 
-/* ROADS */
+/* ROAD FUNCTION */
 
 function road(x,z,w,d){
 
-  const r = new THREE.Mesh(
-    new THREE.BoxGeometry(w,0.08,d),
-    new THREE.MeshStandardMaterial({
-      color:0x454545
-    })
-  );
+const r=new THREE.Mesh(
+new THREE.BoxGeometry(w,.08,d),
+new THREE.MeshStandardMaterial({
+color:0x3e4145
+})
+);
 
-  r.position.set(x,0.04,z);
+r.position.set(x,.04,z);
+scene.add(r);
 
-  scene.add(r);
 }
 
-road(0,0,300,14);
-road(0,0,14,300);
-road(0,50,300,10);
-road(60,0,10,300);
+/* MAIN ROADS */
+
+road(0,0,300,16);
+road(0,0,16,300);
+
+road(0,55,300,11);
+road(55,0,11,300);
+
+road(0,-65,300,11);
+road(-65,0,11,300);
+
+/* ROAD MARKINGS */
+
+function marking(x,z,w,d){
+
+const m=new THREE.Mesh(
+new THREE.BoxGeometry(w,.09,d),
+new THREE.MeshStandardMaterial({
+color:0xe7d36a
+})
+);
+
+m.position.set(x,.09,z);
+scene.add(m);
+
+}
+
+for(let x=-140;x<140;x+=18){
+marking(x,0,7,.35);
+}
+
+for(let z=-140;z<140;z+=18){
+marking(0,z,.35,7);
+}
 
 /* BUILDINGS */
 
-function building(x,z,w,h,d,color){
+function building(x,z,w,h,d,color,name){
 
-  const b = new THREE.Mesh(
-    new THREE.BoxGeometry(w,h,d),
-    new THREE.MeshStandardMaterial({
-      color:color
-    })
-  );
+const b=new THREE.Mesh(
+new THREE.BoxGeometry(w,h,d),
+new THREE.MeshStandardMaterial({
+color:color
+})
+);
 
-  b.position.set(x,h/2,z);
-  scene.add(b);
+b.position.set(x,h/2,z);
+scene.add(b);
 
-  /* roof */
+/* roof */
 
-  const roof = new THREE.Mesh(
-    new THREE.BoxGeometry(w+0.3,0.4,d+0.3),
-    new THREE.MeshStandardMaterial({
-      color:0x55352a
-    })
-  );
+const roof=new THREE.Mesh(
+new THREE.BoxGeometry(w+.4,.45,d+.4),
+new THREE.MeshStandardMaterial({
+color:0x51342b
+})
+);
 
-  roof.position.set(x,h+0.2,z);
-  scene.add(roof);
+roof.position.set(x,h+.22,z);
+scene.add(roof);
+
+/* windows */
+
+for(let yy=2;yy<h;yy+=2.5){
+
+for(let xx=-w/2+1;xx<w/2-1;xx+=2.5){
+
+const win=new THREE.Mesh(
+new THREE.BoxGeometry(.8,.9,.08),
+new THREE.MeshStandardMaterial({
+color:0xf4d98b,
+emissive:0x332200
+})
+);
+
+win.position.set(
+x+xx,
+yy,
+z-d/2-.05
+);
+
+scene.add(win);
+
 }
 
-/* CITY */
+}
 
-building(-25,-25,12,9,12,0xd18a58);
-building(25,-25,15,12,13,0xc87858);
-building(-30,25,14,10,12,0xd2a45c);
-building(30,25,13,8,14,0xb96d55);
+}
 
-building(-65,-20,18,14,15,0xc68b5a);
-building(65,20,18,11,16,0xd09a5c);
+/* CITY BUILDINGS */
 
-building(-70,65,20,13,18,0xb8755a);
-building(70,-65,22,15,18,0xc88458);
+building(-25,-25,14,10,14,0xc98757,"HOUSE");
+building(25,-25,16,13,15,0xc87858,"HOUSE");
+
+building(-30,25,15,11,14,0xd0a05d,"SHOP");
+building(30,25,15,9,15,0xb96e55,"SHOP");
+
+building(-75,-25,22,15,18,0xc68b5a,"OFFICE");
+building(75,25,22,12,18,0xd09a5c,"HOTEL");
+
+building(-75,65,24,14,20,0xb8755a,"MALL");
+building(75,-65,24,17,20,0xc88458,"HOTEL");
+
+building(-115,45,20,11,18,0xd0a15e,"HOUSE");
+building(115,-45,20,13,18,0xb97859,"HOUSE");
+
+building(-110,-70,25,15,20,0xc98258,"OFFICE");
+building(105,75,25,14,20,0xd09a5e,"SHOP");
+
+/* TREES */
+
+function tree(x,z){
+
+const trunk=new THREE.Mesh(
+new THREE.CylinderGeometry(.35,.45,2.5,8),
+new THREE.MeshStandardMaterial({color:0x70452c})
+);
+
+trunk.position.set(x,1.25,z);
+scene.add(trunk);
+
+const leaves=new THREE.Mesh(
+new THREE.SphereGeometry(2.2,10,8),
+new THREE.MeshStandardMaterial({color:0x2f7d3b})
+);
+
+leaves.position.set(x,3.5,z);
+scene.add(leaves);
+
+}
+
+/* MANY TREES */
+
+[
+[-45,-45],[-50,45],[45,-45],[50,45],
+[-95,-45],[95,45],[-95,85],[95,-85],
+[-40,90],[40,-90],[-125,10],[125,-10]
+].forEach(p=>tree(p[0],p[1]));
+
+/* STREETLIGHTS */
+
+function lightPole(x,z){
+
+const pole=new THREE.Mesh(
+new THREE.CylinderGeometry(.08,.1,4,8),
+new THREE.MeshStandardMaterial({color:0x333333})
+);
+
+pole.position.set(x,2,z);
+scene.add(pole);
+
+const lamp=new THREE.Mesh(
+new THREE.SphereGeometry(.25,8,8),
+new THREE.MeshStandardMaterial({
+color:0xffffcc,
+emissive:0x555522
+})
+);
+
+lamp.position.set(x,4,z);
+scene.add(lamp);
+
+}
+
+for(let x=-120;x<=120;x+=30){
+lightPole(x,9);
+lightPole(x,-9);
+}
+
+for(let z=-120;z<=120;z+=30){
+lightPole(9,z);
+lightPole(-9,z);
+}
 
 /* PLAYER */
 
-const player = new THREE.Mesh(
-  new THREE.CapsuleGeometry(0.45,1.2,6,12),
-  new THREE.MeshStandardMaterial({
-    color:0x222222
-  })
+const player=new THREE.Mesh(
+new THREE.CapsuleGeometry(.45,1.2,6,12),
+new THREE.MeshStandardMaterial({color:0x202020})
 );
 
 player.position.set(0,1,10);
 scene.add(player);
 
-/* PLAYER HEAD */
-
-const head = new THREE.Mesh(
-  new THREE.SphereGeometry(0.42,16,16),
-  new THREE.MeshStandardMaterial({
-    color:0x9b6044
-  })
+const head=new THREE.Mesh(
+new THREE.SphereGeometry(.42,16,16),
+new THREE.MeshStandardMaterial({color:0x9b6044})
 );
 
-head.position.y = 1.15;
+head.position.y=1.15;
 player.add(head);
+
+/* NPCs */
+
+const npcs=[];
+
+function createNPC(x,z,color){
+
+const npc=new THREE.Mesh(
+new THREE.CapsuleGeometry(.38,1,6,10),
+new THREE.MeshStandardMaterial({color:color})
+);
+
+npc.position.set(x,1,z);
+npc.userData={
+originX:x,
+originZ:z,
+phase:Math.random()*10
+};
+
+scene.add(npc);
+npcs.push(npc);
+
+}
+
+createNPC(-12,18,0x244f9e);
+createNPC(15,-18,0x8b2d45);
+createNPC(-40,10,0x276b46);
+createNPC(40,-10,0x76521e);
+createNPC(-80,20,0x572b80);
+createNPC(80,-20,0x8a5b27);
 
 /* MOVEMENT */
 
-let moveX = 0;
-let moveZ = 0;
+let moveX=0;
+let moveZ=0;
 
 function movePlayer(){
 
-  player.position.x += moveX * 0.12;
-  player.position.z += moveZ * 0.12;
+player.position.x+=moveX*.13;
+player.position.z+=moveZ*.13;
 
-  player.position.x =
-    Math.max(-140,Math.min(140,player.position.x));
+player.position.x=
+Math.max(-140,Math.min(140,player.position.x));
 
-  player.position.z =
-    Math.max(-140,Math.min(140,player.position.z));
+player.position.z=
+Math.max(-140,Math.min(140,player.position.z));
+
+if(Math.abs(moveX)+Math.abs(moveZ)>.1){
+
+player.rotation.y=
+Math.atan2(moveX,moveZ);
+
+}
+
+}
+
+/* NPC MOVEMENT */
+
+function updateNPCs(){
+
+const t=performance.now()*.001;
+
+npcs.forEach((npc,i)=>{
+
+npc.position.x=
+npc.userData.originX+
+Math.sin(t*.35+npc.userData.phase)*5;
+
+npc.position.z=
+npc.userData.originZ+
+Math.cos(t*.3+npc.userData.phase)*5;
+
+});
+
 }
 
 /* CAMERA */
 
 function updateCamera(){
 
-  const target = new THREE.Vector3(
-    player.position.x,
-    player.position.y,
-    player.position.z
-  );
+const desired=new THREE.Vector3(
+player.position.x,
+player.position.y+7,
+player.position.z+11
+);
 
-  const desired = new THREE.Vector3(
-    player.position.x,
-    player.position.y + 7,
-    player.position.z + 11
-  );
+camera.position.lerp(desired,.08);
 
-  camera.position.lerp(desired,0.08);
+camera.lookAt(
+player.position.x,
+player.position.y,
+player.position.z
+);
 
-  camera.lookAt(target);
 }
 
 /* JOYSTICK */
 
-const joystick =
-document.getElementById("joystick");
+const joystick=document.getElementById("joystick");
+const stick=document.getElementById("stick");
 
-const stick =
-document.getElementById("stick");
-
-let active = false;
+let active=false;
 
 function joystickMove(e){
 
-  if(!active)return;
+if(!active)return;
 
-  const rect = joystick.getBoundingClientRect();
+const rect=joystick.getBoundingClientRect();
 
-  const centerX =
-    rect.left + rect.width/2;
+const cx=rect.left+rect.width/2;
+const cy=rect.top+rect.height/2;
 
-  const centerY =
-    rect.top + rect.height/2;
+let dx=e.clientX-cx;
+let dy=e.clientY-cy;
 
-  let dx = e.clientX-centerX;
-  let dy = e.clientY-centerY;
+const max=45;
 
-  const max = 45;
+const dist=Math.sqrt(dx*dx+dy*dy);
 
-  const distance =
-    Math.sqrt(dx*dx+dy*dy);
+if(dist>max){
+dx=dx/dist*max;
+dy=dy/dist*max;
+}
 
-  if(distance > max){
+stick.style.transform=
+`translate(${dx}px,${dy}px)`;
 
-    dx = dx/distance*max;
-    dy = dy/distance*max;
+moveX=dx/max;
+moveZ=dy/max;
 
-  }
-
-  stick.style.transform =
-    `translate(${dx}px,${dy}px)`;
-
-  moveX = dx/max;
-  moveZ = dy/max;
 }
 
 joystick.addEventListener(
-  "pointerdown",
-  e=>{
-    active=true;
-    joystick.setPointerCapture(e.pointerId);
-    joystickMove(e);
-  }
+"pointerdown",e=>{
+active=true;
+joystick.setPointerCapture(e.pointerId);
+joystickMove(e);
+}
 );
 
 joystick.addEventListener(
-  "pointermove",
-  e=>{
-    joystickMove(e);
-  }
+"pointermove",joystickMove
 );
 
-joystick.addEventListener(
-  "pointerup",
-  ()=>{
-    active=false;
-    moveX=0;
-    moveZ=0;
-    stick.style.transform="translate(0,0)";
-  }
-);
+function stopJoystick(){
 
-joystick.addEventListener(
-  "pointercancel",
-  ()=>{
-    active=false;
-    moveX=0;
-    moveZ=0;
-    stick.style.transform="translate(0,0)";
-  }
-);
+active=false;
+moveX=0;
+moveZ=0;
+stick.style.transform="translate(0,0)";
+
+}
+
+joystick.addEventListener("pointerup",stopJoystick);
+joystick.addEventListener("pointercancel",stopJoystick);
 
 /* ACTION */
 
-document
-.getElementById("action")
-.addEventListener("click",()=>{
+document.getElementById("action").addEventListener(
+"click",()=>{
 
-  const money =
-    document.getElementById("money");
+const money=document.getElementById("money");
 
-  money.textContent =
-    Number(money.textContent)+100;
+money.textContent=
+Number(money.textContent)+100;
 
-});
+}
+);
 
 /* GAME LOOP */
 
 function animate(){
 
-  requestAnimationFrame(animate);
+requestAnimationFrame(animate);
 
-  movePlayer();
-  updateCamera();
+movePlayer();
+updateNPCs();
+updateCamera();
 
-  renderer.render(scene,camera);
+renderer.render(scene,camera);
+
 }
 
 animate();
@@ -388,19 +504,16 @@ animate();
 
 window.addEventListener("resize",()=>{
 
-  camera.aspect =
-    innerWidth/innerHeight;
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
 
-  camera.updateProjectionMatrix();
-
-  renderer.setSize(
-    innerWidth,
-    innerHeight
-  );
+renderer.setSize(
+innerWidth,
+innerHeight
+);
 
 });
 
 </script>
-
 </body>
 </html>

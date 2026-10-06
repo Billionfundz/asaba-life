@@ -2,202 +2,405 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>ASABA LIFE</title>
+
 <style>
 *{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#87b9e8;font-family:Arial,sans-serif}
-#game{position:relative;width:100%;height:100%;overflow:hidden}
-canvas{display:block;width:100%;height:100%}
-#hud{
- position:absolute;top:12px;left:12px;z-index:10;
- padding:10px 14px;border-radius:12px;
- background:#111c;color:white;font-weight:bold;
- border:1px solid #ffffff33
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#87b9e8;
+  font-family:Arial,sans-serif;
+  touch-action:none;
 }
-#hud span{color:#72ff80}
-#help{
- position:absolute;bottom:15px;left:50%;transform:translateX(-50%);
- background:#111c;color:white;padding:9px 13px;border-radius:10px;
- font-size:13px;text-align:center
+#game{
+  position:relative;
+  width:100%;
+  height:100%;
+}
+canvas{
+  display:block;
+  width:100%;
+  height:100%;
+}
+#hud{
+  position:absolute;
+  top:12px;
+  left:12px;
+  z-index:10;
+  background:#111c;
+  color:white;
+  padding:10px 14px;
+  border-radius:12px;
+  font-weight:bold;
+}
+#money{color:#65ff78}
+
+#joystick{
+  position:absolute;
+  left:22px;
+  bottom:25px;
+  width:125px;
+  height:125px;
+  border-radius:50%;
+  background:#ffffff25;
+  border:2px solid #ffffff55;
+  z-index:20;
+}
+#stick{
+  position:absolute;
+  left:37px;
+  top:37px;
+  width:50px;
+  height:50px;
+  border-radius:50%;
+  background:#ffffffaa;
+}
+
+#action{
+  position:absolute;
+  right:25px;
+  bottom:35px;
+  width:75px;
+  height:75px;
+  border-radius:50%;
+  border:2px solid white;
+  background:#111c;
+  color:white;
+  font-weight:bold;
+  z-index:20;
+}
+
+#tip{
+  position:absolute;
+  top:12px;
+  right:12px;
+  color:white;
+  background:#111c;
+  padding:8px 10px;
+  border-radius:10px;
+  font-size:12px;
 }
 </style>
 </head>
 
 <body>
+
 <div id="game">
+
   <div id="hud">
     🇳🇬 ASABA LIFE<br>
     💰 ₦<span id="money">5000</span>
   </div>
 
-  <div id="help">
-    Use <b>W A S D</b> or the arrow keys to move
+  <div id="tip">Explore Asaba</div>
+
+  <div id="joystick">
+    <div id="stick"></div>
   </div>
+
+  <button id="action">ACTION</button>
+
 </div>
 
-<script>
-const game=document.getElementById("game");
-const money=document.getElementById("money");
+<script type="module">
 
-/*
-  Simple browser 3D-style engine.
-  We are starting with a lightweight perspective
-  world so the game can run on phones.
-*/
+import * as THREE from
+"https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js";
 
-const canvas=document.createElement("canvas");
-game.insertBefore(canvas,game.firstChild);
-const ctx=canvas.getContext("2d");
+const scene = new THREE.Scene();
 
-let W=0,H=0;
-let player={x:0,y:0};
-let keys={};
+scene.background = new THREE.Color(0x87b9e8);
 
-const buildings=[
- {x:-260,y:180,w:180,h:130,c:"#c98b55"},
- {x:180,y:220,w:190,h:140,c:"#d2a05d"},
- {x:-430,y:-250,w:220,h:150,c:"#b87954"},
- {x:250,y:-300,w:210,h:160,c:"#c77a5a"},
- {x:-80,y:430,w:240,h:150,c:"#d1b05d"},
- {x:400,y:400,w:190,h:140,c:"#a86c55"}
-];
+const camera = new THREE.PerspectiveCamera(
+  60,
+  innerWidth / innerHeight,
+  0.1,
+  1000
+);
 
-function resize(){
- W=canvas.width=window.innerWidth;
- H=canvas.height=window.innerHeight;
-}
-window.addEventListener("resize",resize);
-resize();
+camera.position.set(0,8,12);
 
-window.addEventListener("keydown",e=>{
- keys[e.key.toLowerCase()]=true;
+const renderer = new THREE.WebGLRenderer({
+  antialias:true
 });
 
-window.addEventListener("keyup",e=>{
- keys[e.key.toLowerCase()]=false;
+renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+
+document.getElementById("game").prepend(renderer.domElement);
+
+/* LIGHT */
+
+const sun = new THREE.DirectionalLight(0xffffff,2);
+sun.position.set(10,20,10);
+scene.add(sun);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.6));
+
+/* GROUND */
+
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(300,300),
+  new THREE.MeshStandardMaterial({
+    color:0x69a957
+  })
+);
+
+ground.rotation.x = -Math.PI/2;
+scene.add(ground);
+
+/* ROADS */
+
+function road(x,z,w,d){
+
+  const r = new THREE.Mesh(
+    new THREE.BoxGeometry(w,0.08,d),
+    new THREE.MeshStandardMaterial({
+      color:0x454545
+    })
+  );
+
+  r.position.set(x,0.04,z);
+
+  scene.add(r);
+}
+
+road(0,0,300,14);
+road(0,0,14,300);
+road(0,50,300,10);
+road(60,0,10,300);
+
+/* BUILDINGS */
+
+function building(x,z,w,h,d,color){
+
+  const b = new THREE.Mesh(
+    new THREE.BoxGeometry(w,h,d),
+    new THREE.MeshStandardMaterial({
+      color:color
+    })
+  );
+
+  b.position.set(x,h/2,z);
+  scene.add(b);
+
+  /* roof */
+
+  const roof = new THREE.Mesh(
+    new THREE.BoxGeometry(w+0.3,0.4,d+0.3),
+    new THREE.MeshStandardMaterial({
+      color:0x55352a
+    })
+  );
+
+  roof.position.set(x,h+0.2,z);
+  scene.add(roof);
+}
+
+/* CITY */
+
+building(-25,-25,12,9,12,0xd18a58);
+building(25,-25,15,12,13,0xc87858);
+building(-30,25,14,10,12,0xd2a45c);
+building(30,25,13,8,14,0xb96d55);
+
+building(-65,-20,18,14,15,0xc68b5a);
+building(65,20,18,11,16,0xd09a5c);
+
+building(-70,65,20,13,18,0xb8755a);
+building(70,-65,22,15,18,0xc88458);
+
+/* PLAYER */
+
+const player = new THREE.Mesh(
+  new THREE.CapsuleGeometry(0.45,1.2,6,12),
+  new THREE.MeshStandardMaterial({
+    color:0x222222
+  })
+);
+
+player.position.set(0,1,10);
+scene.add(player);
+
+/* PLAYER HEAD */
+
+const head = new THREE.Mesh(
+  new THREE.SphereGeometry(0.42,16,16),
+  new THREE.MeshStandardMaterial({
+    color:0x9b6044
+  })
+);
+
+head.position.y = 1.15;
+player.add(head);
+
+/* MOVEMENT */
+
+let moveX = 0;
+let moveZ = 0;
+
+function movePlayer(){
+
+  player.position.x += moveX * 0.12;
+  player.position.z += moveZ * 0.12;
+
+  player.position.x =
+    Math.max(-140,Math.min(140,player.position.x));
+
+  player.position.z =
+    Math.max(-140,Math.min(140,player.position.z));
+}
+
+/* CAMERA */
+
+function updateCamera(){
+
+  const target = new THREE.Vector3(
+    player.position.x,
+    player.position.y,
+    player.position.z
+  );
+
+  const desired = new THREE.Vector3(
+    player.position.x,
+    player.position.y + 7,
+    player.position.z + 11
+  );
+
+  camera.position.lerp(desired,0.08);
+
+  camera.lookAt(target);
+}
+
+/* JOYSTICK */
+
+const joystick =
+document.getElementById("joystick");
+
+const stick =
+document.getElementById("stick");
+
+let active = false;
+
+function joystickMove(e){
+
+  if(!active)return;
+
+  const rect = joystick.getBoundingClientRect();
+
+  const centerX =
+    rect.left + rect.width/2;
+
+  const centerY =
+    rect.top + rect.height/2;
+
+  let dx = e.clientX-centerX;
+  let dy = e.clientY-centerY;
+
+  const max = 45;
+
+  const distance =
+    Math.sqrt(dx*dx+dy*dy);
+
+  if(distance > max){
+
+    dx = dx/distance*max;
+    dy = dy/distance*max;
+
+  }
+
+  stick.style.transform =
+    `translate(${dx}px,${dy}px)`;
+
+  moveX = dx/max;
+  moveZ = dy/max;
+}
+
+joystick.addEventListener(
+  "pointerdown",
+  e=>{
+    active=true;
+    joystick.setPointerCapture(e.pointerId);
+    joystickMove(e);
+  }
+);
+
+joystick.addEventListener(
+  "pointermove",
+  e=>{
+    joystickMove(e);
+  }
+);
+
+joystick.addEventListener(
+  "pointerup",
+  ()=>{
+    active=false;
+    moveX=0;
+    moveZ=0;
+    stick.style.transform="translate(0,0)";
+  }
+);
+
+joystick.addEventListener(
+  "pointercancel",
+  ()=>{
+    active=false;
+    moveX=0;
+    moveZ=0;
+    stick.style.transform="translate(0,0)";
+  }
+);
+
+/* ACTION */
+
+document
+.getElementById("action")
+.addEventListener("click",()=>{
+
+  const money =
+    document.getElementById("money");
+
+  money.textContent =
+    Number(money.textContent)+100;
+
 });
 
-function move(){
- const speed=4;
+/* GAME LOOP */
 
- if(keys["w"]||keys["arrowup"])player.y-=speed;
- if(keys["s"]||keys["arrowdown"])player.y+=speed;
- if(keys["a"]||keys["arrowleft"])player.x-=speed;
- if(keys["d"]||keys["arrowright"])player.x+=speed;
+function animate(){
+
+  requestAnimationFrame(animate);
+
+  movePlayer();
+  updateCamera();
+
+  renderer.render(scene,camera);
 }
 
-function project(x,y,z){
- const scale=500/(z+500);
- return {
-   x:W/2+x*scale,
-   y:H/2+y*scale,
-   scale
- };
-}
+animate();
 
-function drawGround(){
- ctx.fillStyle="#72a95b";
- ctx.fillRect(0,0,W,H);
+/* RESIZE */
 
- const horizon=H*0.45;
+window.addEventListener("resize",()=>{
 
- ctx.fillStyle="#555";
- ctx.fillRect(0,horizon,W,H-horizon);
+  camera.aspect =
+    innerWidth/innerHeight;
 
- ctx.strokeStyle="#777";
- ctx.lineWidth=3;
+  camera.updateProjectionMatrix();
 
- for(let i=-10;i<=10;i++){
-   ctx.beginPath();
-   ctx.moveTo(W/2+i*80,horizon);
-   ctx.lineTo(W/2+i*180,H);
-   ctx.stroke();
- }
+  renderer.setSize(
+    innerWidth,
+    innerHeight
+  );
 
- for(let y=horizon;y<H;y+=45){
-   ctx.beginPath();
-   ctx.moveTo(0,y);
-   ctx.lineTo(W,y);
-   ctx.stroke();
- }
-}
+});
 
-function drawBuilding(b){
- const z=b.y-player.y+700;
- if(z<80)return;
-
- const p=project(b.x-player.x,b.y-player.y,z);
-
- const w=b.w*p.scale;
- const h=b.h*p.scale;
-
- const x=p.x-w/2;
- const y=p.y-h;
-
- ctx.fillStyle="#0004";
- ctx.fillRect(x+8,y+10,w,h);
-
- ctx.fillStyle=b.c;
- ctx.fillRect(x,y,w,h);
-
- ctx.fillStyle="#ead8a0";
-
- const windows=Math.max(2,Math.floor(w/45));
-
- for(let i=0;i<windows;i++){
-   const wx=x+15+i*(w-30)/windows;
-   ctx.fillRect(wx,y+25,18*p.scale,22*p.scale);
-   ctx.fillRect(wx,y+65,18*p.scale,22*p.scale);
- }
-}
-
-function drawPlayer(){
- const px=W/2;
- const py=H*0.68;
-
- ctx.fillStyle="#0005";
- ctx.beginPath();
- ctx.ellipse(px,py+20,22,9,0,0,Math.PI*2);
- ctx.fill();
-
- ctx.fillStyle="#222";
- ctx.fillRect(px-15,py-10,30,35);
-
- ctx.fillStyle="#b97855";
- ctx.beginPath();
- ctx.arc(px,py-22,13,0,Math.PI*2);
- ctx.fill();
-
- ctx.fillStyle="#111";
- ctx.beginPath();
- ctx.arc(px,py-28,14,Math.PI,Math.PI*2);
- ctx.fill();
-
- ctx.fillStyle="white";
- ctx.font="bold 12px Arial";
- ctx.textAlign="center";
- ctx.fillText("PLAYER",px,py+52);
-}
-
-function loop(){
- move();
-
- ctx.clearRect(0,0,W,H);
-
- drawGround();
-
- buildings
-   .slice()
-   .sort((a,b)=>(b.y-player.y)-(a.y-player.y))
-   .forEach(drawBuilding);
-
- drawPlayer();
-
- requestAnimationFrame(loop);
-}
-
-loop();
 </script>
+
 </body>
-  </html>
+</html>
